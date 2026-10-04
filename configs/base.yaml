@@ -1,0 +1,32 @@
+project:
+  domain: technical_customer_support
+  seed: 42
+
+model:
+  base_model: Qwen/Qwen2.5-7B-Instruct
+
+training:
+  method: qlora
+  output_dir: outputs/training
+  learning_rate: 0.0002
+  num_train_epochs: 2
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 8
+  max_seq_length: 2048
+  lora_r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  quantization_bits: 4
+
+tracking:
+  backend: mlflow
+  experiment_name: llm-prod-pipeline
+
+evaluation:
+  split: test
+  include_safety_refusal_checks: true
+
+serving:
+  engine: vllm
+  host: 0.0.0.0
+  port: 8000
