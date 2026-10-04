@@ -15,6 +15,7 @@ This project intentionally stays narrow:
 - Package the service with **Docker**.
 - Use CI to re-run evaluation checks when model/data/evaluation code changes.
 - Report training cost, p50/p95 latency, throughput, token metrics, and held-out evaluation scores.
+- Publish the final fine-tuned adapter/model artifact to Hugging Face with a concise model card and measured results.
 
 No RAG, agents, frontend, Kubernetes, distributed training, or custom model architecture.
 
@@ -64,7 +65,7 @@ The final training run will be reproducible from a versioned config and fixed da
 | Throughput | TBD |
 | Output tokens/sec | TBD |
 
-Numbers will only be added after measured runs.
+Numbers will only be added after measured runs. The final Hugging Face model page will be linked here once published.
 
 ## Local setup
 
