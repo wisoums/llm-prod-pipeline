@@ -1,0 +1,28 @@
+name: Evaluation Gate
+
+on:
+  pull_request:
+    paths:
+      - "configs/**"
+      - "src/data/**"
+      - "src/training/**"
+      - "src/evaluation/**"
+      - "data/metadata/**"
+      - ".github/workflows/evaluation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  evaluation-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Evaluation smoke tests
+        run: pytest -q tests/evaluation
