@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm-prod-pipeline"
+version = "0.1.0"
+description = "Production-style QLoRA fine-tuning, evaluation, and vLLM serving pipeline."
+requires-python = ">=3.11,<3.13"
+dependencies = [
+  "fastapi>=0.115",
+  "pydantic>=2.9",
+  "pyyaml>=6.0",
+  "uvicorn>=0.30",
+]
+
+[project.optional-dependencies]
+training = [
+  "accelerate>=1.0",
+  "bitsandbytes>=0.44",
+  "datasets>=3.0",
+  "mlflow>=2.17",
+  "peft>=0.13",
+  "torch>=2.4",
+  "transformers>=4.46",
+  "trl>=0.12",
+]
+serving = [
+  "vllm>=0.6",
+]
+dev = [
+  "pytest>=8.3",
+  "ruff>=0.7",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
