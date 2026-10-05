@@ -2,44 +2,64 @@
 
 ## Selected dataset
 
-- Hugging Face dataset: `benjaminmacklin/IT_Support_V2`
-- Domain: English IT helpdesk / technical support
-- Size: 103,226 conversations
-- Format: conversational JSON with a `messages` field containing user/assistant turns
-- License: MIT (per the Hugging Face dataset card)
-- Intended task: supervised fine-tuning for technical-support response generation
+- Dataset: `ronantakizawa/github-codereview`
+- Domain: Python code review
+- Task: given a Python diff, generate a concise actionable review comment or return `No issues found.`
 
-## Why this dataset
+## Python subset
 
-This dataset matches the project domain closely: IT support and administration rather than generic customer-service chat. It covers technical troubleshooting topics such as Windows issues, networking, drivers, SQL Server administration, and hardware debugging.
+- Train: 82,288
+- Validation: 2,639
+- Test: 2,609
+- Total: 87,536
+- Positive: 70,903
+- Negative: 16,633 (19%)
 
-It is also large enough for meaningful QLoRA experiments while remaining manageable for a focused project.
+## Why it fits
 
-## Target model behavior
+The dataset contains real code-review interactions with fields such as:
 
-The fine-tuned model should:
+- `diff_context`
+- `reviewer_comment`
+- `quality_score`
+- `comment_type`
+- `is_negative`
 
-- answer technical-support questions clearly and directly;
-- provide useful step-by-step troubleshooting when appropriate;
-- remain within the IT/helpdesk domain;
-- avoid fabricating certainty when the information is insufficient;
-- refuse clearly unsafe requests in the separate safety evaluation.
+It includes both actionable review comments and negative examples, which allows the model to learn when not to comment.
 
-## Preliminary risks to audit before training
+## Audit findings
 
-The dataset must be sampled and checked for:
+- No missing `before_code` or `reviewer_comment`
+- No obvious vague comments detected by simple pattern checks
+- 25,104 repeated comment texts
+- 1,331 potentially external-context-dependent comments
+- Median code length: 1,876 characters
+- P95: 2,851
+- P99: 18,104
+- Maximum: 389,803
 
-- factual correctness and unsafe technical advice;
-- duplicated or near-duplicated conversations;
-- inconsistent response style or quality;
-- overly long or malformed conversations;
-- unsupported chain-of-thought or hidden-reasoning style content;
-- poor coverage balance across common technical-support topics;
-- data leakage risks when train/validation/test splits are created;
-- any content or metadata that should not be redistributed.
+Manual inspection of 100 examples showed generally useful, human-like review comments, but also some context-dependent, weak, duplicated, and excessively long examples.
 
-## Readiness decision
+## Cleaning risks
 
-Status: **selected, pending quality audit**.
+Issue #2 should address:
 
-The dataset should not be treated as training-ready until the local audit confirms schema validity, quality, and acceptable duplication/coverage.
+- Python-only filtering
+- malformed or empty diffs
+- duplicate / near-duplicate examples
+- external-context-dependent comments
+- weak review comments
+- excessive input length
+- quality-score filtering only if supported by further analysis
+
+## Licensing
+
+The Hugging Face dataset currently shows license `other`.
+
+The dataset card states that source repositories were selected from permissively licensed projects such as MIT, Apache-2.0, and BSD.
+
+The raw dataset will not be redistributed through this repository. Licensing and provenance will be documented again before publishing the final model to Hugging Face.
+
+## Decision
+
+**Accepted for the project, pending cleaning in Issue #2.**
