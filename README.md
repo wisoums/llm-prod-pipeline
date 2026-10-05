@@ -1,87 +1,142 @@
-# LLM Production Fine-Tuning & Serving Pipeline
+<div align="center">
 
-End-to-end pipeline for fine-tuning an open LLM with QLoRA, evaluating it, and serving it with production-style latency and throughput measurement.
+# ReviewPy
 
-> **Status:** project scaffolded; implementation is tracked in GitHub Issues.
+**Human-style Python code review from your terminal.**
 
-## Scope
+[![Python](https://img.shields.io/badge/Python-3.12%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Model](https://img.shields.io/badge/Model-Qwen2.5--7B-7C3AED)](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct)
+[![Fine-tuning](https://img.shields.io/badge/Fine--tuning-QLoRA-F59E0B)](#)
+[![Serving](https://img.shields.io/badge/Serving-vLLM-2563EB)](https://github.com/vllm-project/vllm)
+[![License](https://img.shields.io/badge/License-Apache%202.0-0EA5E9)](LICENSE)
 
-This project intentionally stays narrow:
+</div>
 
-- Fine-tune **Qwen2.5-7B-Instruct** with **QLoRA** on a focused **technical customer-support** dataset.
-- Track training runs with **MLflow**.
-- Evaluate task quality plus basic safety/refusal behavior.
-- Serve the fine-tuned model with **vLLM** behind a **FastAPI** endpoint.
-- Package the service with **Docker**.
-- Use CI to re-run evaluation checks when model/data/evaluation code changes.
-- Report training cost, p50/p95 latency, throughput, token metrics, and held-out evaluation scores.
-- Publish the final fine-tuned adapter/model artifact to Hugging Face with a concise model card and measured results.
+---
 
-No RAG, agents, frontend, Kubernetes, distributed training, or custom model architecture.
+ReviewPy is a CLI for reviewing GitHub pull requests with a model fine-tuned on real human code-review feedback.
 
-## Pipeline
+Paste a PR URL and ReviewPy analyzes the changed Python lines, identifies meaningful issues, and returns concise reviewer-style comments tied to the relevant diff.
+
+```bash
+reviewpy https://github.com/org/repo/pull/123
+```
 
 ```text
-Dataset -> validation/splits -> QLoRA fine-tuning -> MLflow
-                                      |
-                                      v
-                         held-out + safety evaluation
-                                      |
-                                      v
-                           vLLM -> FastAPI -> Docker
-                                      |
-                                      v
-                    latency / throughput / token metrics
+src/config.py:48
+
+Using `x or default` here will replace valid falsy values such as `0`.
+Consider checking `x is None` explicitly.
 ```
+
+The goal is simple: useful comments when something matters, and `No issues found.` when it does not.
+
+## How it works
+
+```text
+GitHub PR URL
+     │
+     ▼
+GitHub API
+     │
+     ▼
+Python diff hunks
+     │
+     ▼
+Input preparation
+     │
+     ▼
+Qwen2.5-7B-Instruct
++ QLoRA PEFT adapter
+     │
+     ▼
+Review comments
+(file + line + text)
+     │
+     ▼
+CLI output
+```
+
+## Model pipeline
+
+- **Dataset:** `ronantakizawa/github-codereview`
+- **Domain:** Python code review
+- **Fine-tuning:** QLoRA-based parameter-efficient fine-tuning (PEFT)
+- **Experiment tracking:** MLflow
+- **Evaluation:** held-out review benchmark + basic safety checks
+- **Serving:** vLLM + FastAPI
+- **Packaging:** Docker
+- **Metrics:** review quality, training cost, p50/p95 latency, throughput
+
+## Planned CLI
+
+```bash
+reviewpy <PR_URL>
+reviewpy <PR_URL> --json
+```
+
+Publishing comments directly to GitHub will be considered later and will require explicit confirmation.
+
+## Project status
+
+- [x] Dataset selected and audited
+- [ ] Reproducible cleaning and preprocessing
+- [ ] Fixed evaluation split
+- [ ] Baseline evaluation
+- [ ] QLoRA PEFT training
+- [ ] Base vs adapted model comparison
+- [ ] CLI PR ingestion and line mapping
+- [ ] vLLM + FastAPI serving
+- [ ] Docker + CI evaluation
+- [ ] Hugging Face release
 
 ## Repository layout
 
 ```text
 configs/          Training, evaluation, and serving configuration
+scripts/          Dataset inspection and preprocessing utilities
 src/
   data/           Dataset loading and validation
-  training/       QLoRA training
-  evaluation/     Task and safety evaluation
+  training/       QLoRA PEFT training
+  evaluation/     Review and safety evaluation
   serving/        FastAPI + vLLM integration
   benchmarking/   Latency and throughput measurement
 tests/            Unit and smoke tests
-docs/             Final results and "what broke" write-up
+docs/             Results and lessons learned
 .github/workflows/ CI
 ```
-
-## Reproducibility
-
-The final training run will be reproducible from a versioned config and fixed data split. MLflow will record hyperparameters, metrics, run metadata, and artifacts needed to compare experiments.
 
 ## Target results
 
 | Metric | Result |
 |---|---:|
-| Held-out task score | TBD |
-| Safety/refusal score | TBD |
+| Held-out review score | TBD |
+| No-comment decision quality | TBD |
 | Training cost | TBD |
 | p50 latency | TBD |
 | p95 latency | TBD |
 | Throughput | TBD |
 | Output tokens/sec | TBD |
 
-Numbers will only be added after measured runs. The final Hugging Face model page will be linked here once published.
+Results will only be added after measured runs.
 
 ## Local setup
 
 ```bash
-git clone https://github.com/wisoums/llm-prod-pipeline.git
-cd llm-prod-pipeline
+git clone https://github.com/wisoums/reviewpy.git
+cd reviewpy
 python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-GPU-specific training and serving dependencies are installed separately through the optional `training` and `serving` dependency groups.
+GPU-specific training and serving dependencies are installed separately through the optional training and serving dependency groups.
 
-## Public-repository safety
+## Scope
 
-Never commit API keys, Hugging Face tokens, MLflow credentials, model weights, generated checkpoints, or restricted/raw datasets. See [SECURITY.md](SECURITY.md).
+ReviewPy v1 is intentionally focused on **Python pull-request review**.
+
+Out of scope for v1: RAG, agents, frontend, Kubernetes, distributed training, custom model architectures, and multi-language review.
 
 ## License
 
