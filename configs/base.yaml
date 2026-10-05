@@ -1,5 +1,5 @@
 project:
-  domain: technical_customer_support
+  domain: python_code_review
   seed: 42
 
 model:
@@ -20,7 +20,7 @@ training:
 
 tracking:
   backend: mlflow
-  experiment_name: llm-prod-pipeline
+  experiment_name: reviewpy
 
 evaluation:
   split: test
