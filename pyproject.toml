@@ -3,9 +3,9 @@ requires = ["setuptools>=75", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "llm-prod-pipeline"
+name = "reviewpy"
 version = "0.1.0"
-description = "Production-style QLoRA fine-tuning, evaluation, and vLLM serving pipeline."
+description = "Human-style Python pull request review powered by a QLoRA-adapted LLM."
 requires-python = ">=3.11,<3.13"
 dependencies = [
   "fastapi>=0.115",
@@ -15,6 +15,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+data = [
+  "datasets>=3.0",
+  "jinja2>=3.1",
+  "transformers>=4.46",
+]
 training = [
   "accelerate>=1.0",
   "bitsandbytes>=0.44",
