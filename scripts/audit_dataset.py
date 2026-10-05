@@ -6,9 +6,13 @@ import statistics
 
 
 DATASET = "ronantakizawa/github-codereview"
+DATASET_REVISION = "c3e3c6e7e9f61e3e7a5b52894bcd440d586ae6ca"
 SEED = 42
 
-ds = load_dataset(DATASET)
+ds = load_dataset(
+    DATASET,
+    revision=DATASET_REVISION,
+)
 python_ds = ds.filter(lambda x: x["language"] == "Python")
 
 all_rows = []
@@ -90,11 +94,11 @@ print(f"Found: {len(vague):,}")
 # 5. Missing / malformed
 # --------------------------------------------------
 
-missing_before = [r for r in all_rows if not (r["before_code"] or "").strip()]
+missing_diff = [r for r in all_rows if not (r["diff_context"] or "").strip()]
 missing_comment = [r for r in all_rows if not (r["reviewer_comment"] or "").strip()]
 
 print("\n=== MISSING DATA ===")
-print(f"Missing before_code: {len(missing_before):,}")
+print(f"Missing diff_context: {len(missing_diff):,}")
 print(f"Missing reviewer_comment: {len(missing_comment):,}")
 
 
@@ -122,19 +126,19 @@ print(f"Extra duplicate instances: {duplicate_instances:,}")
 # 7. Code size / overly long examples
 # --------------------------------------------------
 
-code_lengths = [len(r["before_code"] or "") for r in all_rows]
-sorted_lengths = sorted(code_lengths)
+diff_lengths = [len(r["diff_context"] or "") for r in all_rows]
+sorted_lengths = sorted(diff_lengths)
 
 def percentile(values, p):
     index = int((len(values) - 1) * p)
     return values[index]
 
-print("\n=== BEFORE_CODE LENGTH (characters) ===")
+print("\n=== DIFF_CONTEXT LENGTH (characters) ===")
 print(f"Median: {percentile(sorted_lengths, 0.50):,}")
 print(f"P90:    {percentile(sorted_lengths, 0.90):,}")
 print(f"P95:    {percentile(sorted_lengths, 0.95):,}")
 print(f"P99:    {percentile(sorted_lengths, 0.99):,}")
-print(f"Max:    {max(code_lengths):,}")
+print(f"Max:    {max(diff_lengths):,}")
 
 
 # --------------------------------------------------

@@ -3,6 +3,7 @@
 ## Selected dataset
 
 - Dataset: `ronantakizawa/github-codereview`
+- Revision: `c3e3c6e7e9f61e3e7a5b52894bcd440d586ae6ca`
 - Domain: Python code review
 - Task: given a Python diff, generate a concise actionable review comment or return `No issues found.`
 
@@ -29,14 +30,16 @@ It includes both actionable review comments and negative examples, which allows 
 
 ## Audit findings
 
-- No missing `before_code` or `reviewer_comment`
+- 341 examples with empty `diff_context`; no missing `reviewer_comment`
 - No obvious vague comments detected by simple pattern checks
 - 25,104 repeated comment texts
 - 1,331 potentially external-context-dependent comments
-- Median code length: 1,876 characters
-- P95: 2,851
-- P99: 18,104
-- Maximum: 389,803
+- `diff_context` length (characters):
+  - Median: 800
+  - P90: 2,852
+  - P95: 4,483
+  - P99: 8,871
+  - Maximum: 35,054
 
 Manual inspection of 100 examples showed generally useful, human-like review comments, but also some context-dependent, weak, duplicated, and excessively long examples.
 
@@ -54,12 +57,17 @@ Issue #2 should address:
 
 ## Licensing
 
-The Hugging Face dataset currently shows license `other`.
+The Hugging Face dataset currently declares its license as `other`.
 
-The dataset card states that source repositories were selected from permissively licensed projects such as MIT, Apache-2.0, and BSD.
+The dataset card states that source repositories were selected from permissively licensed projects such as MIT, Apache-2.0, and BSD. However, the compiled dataset does not currently expose one uniform permissive license covering every row.
 
-The raw dataset will not be redistributed through this repository. Licensing and provenance will be documented again before publishing the final model to Hugging Face.
+For this project:
+
+- the raw dataset will not be redistributed;
+- dataset provenance and licensing will remain documented;
+- the dataset may be used for local experimentation and model development;
+- redistribution/publication of the final adapter or model will require a separate licensing review before release.
 
 ## Decision
 
-**Accepted for the project, pending cleaning in Issue #2.**
+**Accepted for experimentation and development, with publication conditional on a final licensing review.**

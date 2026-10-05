@@ -1,6 +1,9 @@
 from datasets import load_dataset
 
-ds = load_dataset("ronantakizawa/github-codereview")
+ds = load_dataset(
+    "ronantakizawa/github-codereview",
+    revision="c3e3c6e7e9f61e3e7a5b52894bcd440d586ae6ca",
+)
 
 print(ds)
 
