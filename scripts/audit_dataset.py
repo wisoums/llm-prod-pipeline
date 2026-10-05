@@ -129,9 +129,11 @@ print(f"Extra duplicate instances: {duplicate_instances:,}")
 diff_lengths = [len(r["diff_context"] or "") for r in all_rows]
 sorted_lengths = sorted(diff_lengths)
 
+
 def percentile(values, p):
     index = int((len(values) - 1) * p)
     return values[index]
+
 
 print("\n=== DIFF_CONTEXT LENGTH (characters) ===")
 print(f"Median: {percentile(sorted_lengths, 0.50):,}")
@@ -174,10 +176,7 @@ print(f"Found: {len(context_dependent):,}")
 # 9. Inspect negative examples
 # --------------------------------------------------
 
-neg_comments = Counter(
-    (r["reviewer_comment"] or "").strip()
-    for r in negatives
-)
+neg_comments = Counter((r["reviewer_comment"] or "").strip() for r in negatives)
 
 print("\n=== NEGATIVE COMMENT VALUES ===")
 for value, count in neg_comments.most_common(10):
