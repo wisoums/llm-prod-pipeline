@@ -1,9 +1,9 @@
-from collections import Counter
-from datasets import load_dataset
 import random
 import re
 import statistics
+from collections import Counter
 
+from datasets import load_dataset
 
 DATASET = "ronantakizawa/github-codereview"
 DATASET_REVISION = "c3e3c6e7e9f61e3e7a5b52894bcd440d586ae6ca"
