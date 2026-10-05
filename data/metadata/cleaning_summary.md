@@ -6,6 +6,7 @@
 - Revision: `c3e3c6e7e9f61e3e7a5b52894bcd440d586ae6ca`
 - Language: Python
 - Base model tokenizer: `Qwen/Qwen2.5-7B-Instruct`
+- Tokenizer revision: `a09a35458c702b33eeacc393d103063234e8bc28`
 - Maximum full sequence length: 2,048 tokens
 
 ## Cleaning
@@ -17,7 +18,8 @@ The preprocessing pipeline:
 - removes empty or malformed diffs;
 - removes empty review comments;
 - removes clearly external-context-dependent comments;
-- removes exact duplicate `(diff, review comment)` examples within each split;
+- removes exact duplicate `(diff, review comment)` examples within each split
+  (case-sensitive, after normalizing line endings and surrounding whitespace);
 - removes cross-split duplicate examples to prevent evaluation leakage;
 - removes examples whose full chat-formatted sequence exceeds 2,048 tokens;
 - preserves both actionable reviews and `No issues found.` examples;
@@ -46,11 +48,13 @@ After filtering:
 
 ## Reproducibility
 
-Preprocessing is deterministic and uses a pinned dataset revision.
+Preprocessing is deterministic and uses pinned dataset and tokenizer
+revisions. Both revisions are recorded in `data/processed/manifest.json`.
 
 Generated dataset files are excluded from Git and can be reproduced with:
 
 ```bash
 python scripts/prepare_dataset.py \
-  --dataset-revision c3e3c6e7e9f61e3e7a5b52894bcd440d586ae6ca
-  
+  --dataset-revision c3e3c6e7e9f61e3e7a5b52894bcd440d586ae6ca \
+  --tokenizer-revision a09a35458c702b33eeacc393d103063234e8bc28
+```

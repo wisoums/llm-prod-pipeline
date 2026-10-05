@@ -12,6 +12,7 @@ from transformers import AutoTokenizer
 
 DATASET_NAME = "ronantakizawa/github-codereview"
 MODEL_NAME = "Qwen/Qwen2.5-7B-Instruct"
+DEFAULT_TOKENIZER_REVISION = "a09a35458c702b33eeacc393d103063234e8bc28"
 SEED = 42
 DEFAULT_MAX_SEQUENCE_TOKENS = 2048
 
@@ -48,14 +49,18 @@ STAT_KEYS = [
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Prepare the ReviewPy Python code-review dataset."
-    )
+    parser = argparse.ArgumentParser(description="Prepare the ReviewPy Python code-review dataset.")
 
     parser.add_argument(
         "--dataset-revision",
         required=True,
         help="Pinned Hugging Face dataset revision/commit SHA.",
+    )
+
+    parser.add_argument(
+        "--tokenizer-revision",
+        default=DEFAULT_TOKENIZER_REVISION,
+        help="Pinned Hugging Face tokenizer revision/commit SHA.",
     )
 
     parser.add_argument(
@@ -104,18 +109,11 @@ def is_effectively_empty_diff(diff: str) -> bool:
 def is_context_dependent(comment: str) -> bool:
     lowered = comment.lower()
 
-    return any(
-        re.search(pattern, lowered)
-        for pattern in CONTEXT_DEPENDENT_PATTERNS
-    )
+    return any(re.search(pattern, lowered) for pattern in CONTEXT_DEPENDENT_PATTERNS)
 
 
 def example_key(diff: str, comment: str) -> str:
-    normalized = (
-        normalize_text(diff).lower()
-        + "\n<REVIEWPY-SEPARATOR>\n"
-        + normalize_text(comment).lower()
-    )
+    normalized = normalize_text(diff) + "\n<REVIEWPY-SEPARATOR>\n" + normalize_text(comment)
 
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
@@ -272,11 +270,15 @@ def main() -> None:
     print(f"Dataset:  {DATASET_NAME}")
     print(f"Revision: {args.dataset_revision}")
     print(f"Model:    {MODEL_NAME}")
+    print(f"Tokenizer revision: {args.tokenizer_revision}")
     print(f"Seed:     {SEED}")
     print(f"Max sequence tokens: {args.max_sequence_tokens}")
 
     print("\nLoading tokenizer...")
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+    tokenizer = AutoTokenizer.from_pretrained(
+        MODEL_NAME,
+        revision=args.tokenizer_revision,
+    )
 
     print("Loading dataset...")
     dataset: DatasetDict = load_dataset(
@@ -288,6 +290,7 @@ def main() -> None:
         "dataset": DATASET_NAME,
         "dataset_revision": args.dataset_revision,
         "model": MODEL_NAME,
+        "tokenizer_revision": args.tokenizer_revision,
         "seed": SEED,
         "max_sequence_tokens": args.max_sequence_tokens,
         "system_prompt": SYSTEM_PROMPT,
@@ -366,31 +369,21 @@ def main() -> None:
     cleaned_by_split["test"] = test_records
     keys_by_split["test"] = test_keys
 
-    stats_by_split["validation"]["removed_cross_split_duplicate"] = (
-        removed_validation_overlap
-    )
-    stats_by_split["test"]["removed_cross_split_duplicate"] = (
-        removed_test_overlap
-    )
+    stats_by_split["validation"]["removed_cross_split_duplicate"] = removed_validation_overlap
+    stats_by_split["test"]["removed_cross_split_duplicate"] = removed_test_overlap
     stats_by_split["train"]["removed_cross_split_duplicate"] = 0
 
-    stats_by_split["validation"]["kept"] = len(
-        cleaned_by_split["validation"]
-    )
-    stats_by_split["test"]["kept"] = len(
-        cleaned_by_split["test"]
-    )
+    stats_by_split["validation"]["kept"] = len(cleaned_by_split["validation"])
+    stats_by_split["test"]["kept"] = len(cleaned_by_split["test"])
 
     # Recalculate positive / negative counts after leakage removal
     for split_name in ["validation", "test"]:
         stats_by_split[split_name]["kept_positive"] = sum(
-            not record["metadata"]["is_negative"]
-            for record in cleaned_by_split[split_name]
+            not record["metadata"]["is_negative"] for record in cleaned_by_split[split_name]
         )
 
         stats_by_split[split_name]["kept_negative"] = sum(
-            record["metadata"]["is_negative"]
-            for record in cleaned_by_split[split_name]
+            record["metadata"]["is_negative"] for record in cleaned_by_split[split_name]
         )
 
     # --------------------------------------------------
@@ -409,19 +402,14 @@ def main() -> None:
 
         manifest["splits"][split_name] = {
             **{key: stats[key] for key in STAT_KEYS},
-            "removed_cross_split_duplicate": stats[
-                "removed_cross_split_duplicate"
-            ],
+            "removed_cross_split_duplicate": stats["removed_cross_split_duplicate"],
             "output_file": str(output_path),
             "sha256": sha256_file(output_path),
         }
 
         print_stats(split_name, stats)
 
-        print(
-            f"{'removed_cross_split_duplicate':30} "
-            f"{stats['removed_cross_split_duplicate']:,}"
-        )
+        print(f"{'removed_cross_split_duplicate':30} {stats['removed_cross_split_duplicate']:,}")
 
     # --------------------------------------------------
     # 4. Verify no exact overlap remains
@@ -436,10 +424,7 @@ def main() -> None:
     print("\n=== CROSS-SPLIT EXACT OVERLAP ===")
 
     for left, right in overlap_pairs:
-        overlap = len(
-            keys_by_split[left]
-            & keys_by_split[right]
-        )
+        overlap = len(keys_by_split[left] & keys_by_split[right])
 
         label = f"{left}_vs_{right}"
 
