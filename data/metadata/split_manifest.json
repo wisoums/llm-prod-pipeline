@@ -1,0 +1,83 @@
+{
+  "splits": {
+    "train": {
+      "count": 52441,
+      "positive": 42667,
+      "negative": 9774,
+      "negative_ratio": 0.1864,
+      "comment_types": {
+        "bug": 2922,
+        "suggestion": 26439,
+        "question": 7057,
+        "nitpick": 550,
+        "style": 725,
+        "refactor": 3034,
+        "security": 824,
+        "performance": 1116,
+        "none": 9774
+      },
+      "sha256": "0c0103d89bdbbfa01975c61239c6fa8e11bfa656cbfa20940189e9f7f567ca1b"
+    },
+    "validation": {
+      "count": 1938,
+      "positive": 1434,
+      "negative": 504,
+      "negative_ratio": 0.2601,
+      "comment_types": {
+        "suggestion": 897,
+        "question": 293,
+        "refactor": 67,
+        "bug": 72,
+        "none": 504,
+        "nitpick": 17,
+        "performance": 30,
+        "style": 34,
+        "security": 24
+      },
+      "sha256": "fe64b7ec8b14b3cc99ca4539bf0bc936f7c5c00d7eb258efc6926ab4b94a0e11"
+    },
+    "test": {
+      "count": 1605,
+      "positive": 1029,
+      "negative": 576,
+      "negative_ratio": 0.3589,
+      "comment_types": {
+        "suggestion": 614,
+        "question": 209,
+        "bug": 53,
+        "nitpick": 23,
+        "style": 30,
+        "refactor": 55,
+        "none": 576,
+        "performance": 24,
+        "security": 21
+      },
+      "sha256": "c67cf84d1f6fd715b6b710cfbf85685d5f1315dd7370b2522e711f0b6dcb0953"
+    }
+  },
+  "overlap": {
+    "train_vs_validation": {
+      "exact_record_overlap": 0,
+      "exact_diff_overlap": 0,
+      "normalized_diff_overlap": 0,
+      "pr_overlap": 0
+    },
+    "train_vs_test": {
+      "exact_record_overlap": 0,
+      "exact_diff_overlap": 0,
+      "normalized_diff_overlap": 0,
+      "pr_overlap": 0
+    },
+    "validation_vs_test": {
+      "exact_record_overlap": 0,
+      "exact_diff_overlap": 0,
+      "normalized_diff_overlap": 0,
+      "pr_overlap": 0
+    }
+  },
+  "near_duplicate_policy": {
+    "method": "normalized exact match",
+    "minimum_normalized_diff_chars": 80
+  },
+  "test_split_frozen": true
+}
