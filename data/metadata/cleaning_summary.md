@@ -31,7 +31,7 @@ The preprocessing pipeline:
 |---|---:|---:|
 | Train | 82,288 | 52,441 |
 | Validation | 2,639 | 1,938 |
-| Test | 2,609 | 1,606 |
+| Test | 2,609 | 1,605 |
 
 ## Cross-split deduplication
 
