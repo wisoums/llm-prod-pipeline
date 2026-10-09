@@ -1,8 +1,24 @@
+"""
+Validate the processed dataset splits.
+
+By default this script is read-only: it fails (exit status 1) if any
+cross-split overlap is found, or if the current splits no longer match
+the frozen manifest in data/metadata/split_manifest.json.
+
+Regenerating the manifest is a separate, explicit operation:
+
+    python scripts/validate_splits.py --write-manifest
+
+which still refuses to write when any overlap remains.
+"""
+
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import re
+import sys
 from collections import Counter
 from pathlib import Path
 
@@ -10,7 +26,7 @@ PROCESSED_DIR = Path(
     "data/processed"
 )
 
-OUTPUT_PATH = Path(
+MANIFEST_PATH = Path(
     "data/metadata/split_manifest.json"
 )
 
@@ -312,7 +328,130 @@ def build_index(
     return index
 
 
-def main() -> None:
+def find_overlaps(
+    overlap_report: dict[str, dict[str, int]],
+) -> list[str]:
+    """
+    Every nonzero overlap metric, as "pair.metric=count".
+    """
+
+    return [
+        f"{label}.{metric}={count}"
+        for (
+            label,
+            metrics,
+        ) in overlap_report.items()
+        for (
+            metric,
+            count,
+        ) in metrics.items()
+        if count
+    ]
+
+
+def flatten(
+    value,
+    prefix: str = "",
+) -> dict[str, object]:
+    if not isinstance(
+        value,
+        dict,
+    ):
+        return {
+            prefix: value
+        }
+
+    flat: dict[
+        str,
+        object,
+    ] = {}
+
+    for key, child in value.items():
+        flat.update(
+            flatten(
+                child,
+                (
+                    f"{prefix}.{key}"
+                    if prefix
+                    else key
+                ),
+            )
+        )
+
+    return flat
+
+
+def diff_manifests(
+    expected: dict,
+    actual: dict,
+) -> list[str]:
+    """
+    Every field that differs between the frozen manifest
+    and the manifest computed from the current splits.
+    """
+
+    expected_flat = flatten(
+        expected
+    )
+
+    actual_flat = flatten(
+        actual
+    )
+
+    missing = object()
+
+    return [
+        f"{key}: expected "
+        f"{expected_flat.get(key, '<missing>')!r}, "
+        "got "
+        f"{actual_flat.get(key, '<missing>')!r}"
+        for key in sorted(
+            expected_flat.keys()
+            | actual_flat.keys()
+        )
+        if expected_flat.get(
+            key,
+            missing,
+        )
+        != actual_flat.get(
+            key,
+            missing,
+        )
+    ]
+
+
+def parse_args(
+    argv: list[str] | None,
+) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Check processed splits for cross-split leakage "
+            "and verify them against the frozen manifest."
+        ),
+    )
+
+    parser.add_argument(
+        "--write-manifest",
+        action="store_true",
+        help=(
+            "Regenerate the frozen manifest from the current "
+            "splits instead of verifying against it. Refuses "
+            "to write if any overlap remains."
+        ),
+    )
+
+    return parser.parse_args(
+        argv
+    )
+
+
+def main(
+    argv: list[str] | None = None,
+) -> int:
+    args = parse_args(
+        argv
+    )
+
     records_by_split: dict[
         str,
         list[dict],
@@ -751,30 +890,117 @@ def main() -> None:
         )
 
     # --------------------------------------------------
-    # 7. Save frozen manifest
+    # 7. Fail on any cross-split leakage
     # --------------------------------------------------
 
-    OUTPUT_PATH.parent.mkdir(
-        parents=True,
-        exist_ok=True,
+    overlaps = find_overlaps(
+        overlap_report
     )
 
-    with OUTPUT_PATH.open(
-        "w",
-        encoding="utf-8",
-    ) as file:
-        json.dump(
-            manifest,
-            file,
-            indent=2,
-            ensure_ascii=False,
+    if overlaps:
+        print(
+            "\nFAILED: cross-split overlap detected:",
+            file=sys.stderr,
         )
 
-    print(
-        "\nManifest written to: "
-        f"{OUTPUT_PATH}"
+        for overlap in overlaps:
+            print(
+                f"  {overlap}",
+                file=sys.stderr,
+            )
+
+        if args.write_manifest:
+            print(
+                "Manifest not written.",
+                file=sys.stderr,
+            )
+
+        return 1
+
+    # --------------------------------------------------
+    # 8a. Explicit regeneration of the frozen manifest
+    # --------------------------------------------------
+
+    if args.write_manifest:
+        MANIFEST_PATH.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        with MANIFEST_PATH.open(
+            "w",
+            encoding="utf-8",
+        ) as file:
+            json.dump(
+                manifest,
+                file,
+                indent=2,
+                ensure_ascii=False,
+            )
+
+        print(
+            "\nManifest written to: "
+            f"{MANIFEST_PATH}"
+        )
+
+        return 0
+
+    # --------------------------------------------------
+    # 8b. Verify against the frozen manifest
+    # --------------------------------------------------
+
+    if not MANIFEST_PATH.exists():
+        print(
+            f"\nFAILED: {MANIFEST_PATH} does not exist. "
+            "Run with --write-manifest to create it.",
+            file=sys.stderr,
+        )
+
+        return 1
+
+    with MANIFEST_PATH.open(
+        "r",
+        encoding="utf-8",
+    ) as file:
+        frozen_manifest = json.load(
+            file
+        )
+
+    differences = diff_manifests(
+        frozen_manifest,
+        manifest,
     )
+
+    if differences:
+        print(
+            "\nFAILED: splits do not match the frozen "
+            f"manifest {MANIFEST_PATH}:",
+            file=sys.stderr,
+        )
+
+        for difference in differences:
+            print(
+                f"  {difference}",
+                file=sys.stderr,
+            )
+
+        print(
+            "If this change is intentional, rerun with "
+            "--write-manifest and commit the new manifest.",
+            file=sys.stderr,
+        )
+
+        return 1
+
+    print(
+        "\nOK: no cross-split overlap and splits match "
+        f"{MANIFEST_PATH}"
+    )
+
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(
+        main()
+    )

@@ -20,7 +20,7 @@ Quick reference for the main files in the project.
 
 `scripts/prepare_dataset.py`: Converts the original Hugging Face dataset into the cleaned ReviewPy training dataset. It filters unusable examples, formats the data for Qwen, removes duplicate/leaking examples, and generates the processed train, validation, and test files.
 
-`scripts/validate_splits.py`: Checks whether the cleaned train, validation, and test sets are safely separated. It looks for exact examples, repeated diffs, meaningful normalized-diff matches, and pull requests appearing across multiple splits.
+`scripts/validate_splits.py`: Checks whether the cleaned train, validation, and test sets are safely separated. It looks for exact examples, repeated diffs, meaningful normalized-diff matches, and pull requests appearing across multiple splits. It exits with an error if any overlap is found or if the splits no longer match `data/metadata/split_manifest.json`. It only rewrites the manifest when run with `--write-manifest`, and it will not write one while any overlap remains.
 
 ## Configuration
 
